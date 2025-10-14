@@ -1,7 +1,7 @@
-using TicketToRide.Domain.Entities;
-using TicketToRide.Domain.Interfaces;
-using TicketToRide.Domain.Enums;
 using TicketToRide.Application.DTOs;
+using TicketToRide.Domain.Entities;
+using TicketToRide.Domain.Enums;
+using TicketToRide.Domain.Interfaces;
 
 namespace TicketToRide.Application.Services
 {
@@ -16,7 +16,7 @@ namespace TicketToRide.Application.Services
 
         public TurnoDTO ObterTurnoAtual(string partidaId)
         {
-            var partida = _partidaRepository.ObterPartida(partidaId);
+            Partida? partida = _partidaRepository.ObterPartida(partidaId);
             if (partida == null)
             {
                 throw new ArgumentException("Partida não encontrada");
@@ -32,7 +32,7 @@ namespace TicketToRide.Application.Services
 
         public TurnoDTO ComprarCartasVeiculo(string partidaId, string jogadorId, List<int> indicesCartasVisiveis = null)
         {
-            var partida = _partidaRepository.ObterPartida(partidaId);
+            Partida? partida = _partidaRepository.ObterPartida(partidaId);
             if (partida == null)
             {
                 throw new ArgumentException("Partida não encontrada");
@@ -43,12 +43,13 @@ namespace TicketToRide.Application.Services
                 throw new InvalidOperationException("Partida não foi iniciada");
             }
 
-            if (!partida.EhVezDoJogador(jogadorId))
+            Jogador jogadorAtual = partida.TurnoAtual.JogadorAtual;
+            if (!jogadorAtual.Id.Equals(jogadorId))
             {
                 throw new InvalidOperationException("Não é a vez deste jogador");
             }
 
-            var jogador = partida.ObterJogador(jogadorId);
+            Jogador? jogador = partida.ObterJogador(jogadorId);
             if (jogador == null)
             {
                 throw new ArgumentException("Jogador não encontrado");
@@ -59,14 +60,14 @@ namespace TicketToRide.Application.Services
                 throw new InvalidOperationException("Jogador já tem o máximo de cartas (10)");
             }
 
-            var cartasCompradas = new List<CartaVeiculo>();
+            List<CartaVeiculo> cartasCompradas = new();
 
             if (indicesCartasVisiveis?.Any() == true)
             {
                 // Comprar cartas visíveis específicas
-                foreach (var indice in indicesCartasVisiveis)
+                foreach (int indice in indicesCartasVisiveis)
                 {
-                    var carta = partida.BaralhoCartasVeiculo.ComprarCartaVisivel(indice);
+                    CartaVeiculo? carta = partida.BaralhoCartasVeiculo.ComprarCartaVisivel(indice);
                     if (carta != null)
                     {
                         cartasCompradas.Add(carta);
@@ -88,7 +89,7 @@ namespace TicketToRide.Application.Services
 
         public TurnoDTO ReivindicarRota(string partidaId, string jogadorId, string rotaId)
         {
-            var partida = _partidaRepository.ObterPartida(partidaId);
+            Partida? partida = _partidaRepository.ObterPartida(partidaId);
             if (partida == null)
             {
                 throw new ArgumentException("Partida não encontrada");
@@ -99,29 +100,30 @@ namespace TicketToRide.Application.Services
                 throw new InvalidOperationException("Partida não foi iniciada");
             }
 
-            if (!partida.EhVezDoJogador(jogadorId))
+            Jogador jogadorAtual = partida.TurnoAtual.JogadorAtual;
+            if (!jogadorAtual.Id.Equals(jogadorId))
             {
                 throw new InvalidOperationException("Não é a vez deste jogador");
             }
 
-            var jogador = partida.ObterJogador(jogadorId);
+            Jogador? jogador = partida.ObterJogador(jogadorId);
             if (jogador == null)
             {
                 throw new ArgumentException("Jogador não encontrado");
             }
 
-            var rota = partida.Tabuleiro.GetRota(rotaId);
+            Rota? rota = partida.Tabuleiro.GetRota(rotaId);
             if (rota == null)
             {
                 throw new ArgumentException("Rota não encontrada");
             }
 
-            if (!rota.EstaDisponivel())
+            if (!rota.Disponivel)
             {
                 throw new InvalidOperationException("Rota já foi conquistada");
             }
 
-            if (!jogador.TemCartasSuficientesParaRota(rota))
+            if (!jogador.TemCartasSuficientesParaConquistarRota(rota))
             {
                 throw new InvalidOperationException("Jogador não tem cartas suficientes para esta rota");
             }
@@ -131,8 +133,8 @@ namespace TicketToRide.Application.Services
                 throw new InvalidOperationException("Jogador não tem peças de trem suficientes");
             }
 
-            var cartasParaUsar = jogador.SelecionarCartasParaRota(rota);
-            var pontos = jogador.ConquistarRota(rota, cartasParaUsar);
+            List<CartaVeiculo> cartasParaUsar = jogador.SelecionarCartasParaRota(rota);
+            int pontos = jogador.ConquistarRota(rota, cartasParaUsar);
 
             if (pontos == 0)
             {
@@ -147,36 +149,27 @@ namespace TicketToRide.Application.Services
 
         public TurnoDTO ComprarBilhetesDestino(string partidaId, string jogadorId, List<string> bilhetesSelecionados)
         {
-            var partida = _partidaRepository.ObterPartida(partidaId);
+            Partida? partida = _partidaRepository.ObterPartida(partidaId);
             if (partida == null)
             {
                 throw new ArgumentException("Partida não encontrada");
             }
 
-            if (!partida.PartidaIniciada)
-            {
-                throw new InvalidOperationException("Partida não foi iniciada");
-            }
-
-            if (!partida.EhVezDoJogador(jogadorId))
+            Jogador jogadorAtual = partida.TurnoAtual.JogadorAtual;
+            if (!jogadorAtual.Id.Equals(jogadorId))
             {
                 throw new InvalidOperationException("Não é a vez deste jogador");
             }
 
-            var jogador = partida.ObterJogador(jogadorId);
+            Jogador? jogador = partida.ObterJogador(jogadorId);
             if (jogador == null)
             {
                 throw new ArgumentException("Jogador não encontrado");
             }
 
-            if (!jogador.PodeComprarBilhetes())
-            {
-                throw new InvalidOperationException("Jogador não pode comprar bilhetes no momento");
-            }
-
             // Comprar 3 bilhetes do baralho
-            var bilhetesComprados = partida.BaralhoCartasDestino.ComprarBilhetes(3);
-            
+            List<BilheteDestino> bilhetesComprados = partida.BaralhoCartasDestino.ComprarBilhetes(3);
+
             if (bilhetesComprados.Count == 0)
             {
                 throw new InvalidOperationException("Não há bilhetes disponíveis no baralho");
@@ -189,13 +182,13 @@ namespace TicketToRide.Application.Services
             }
 
             // Adicionar bilhetes selecionados à mão do jogador
-            var bilhetesParaManter = bilhetesComprados.Where(b => 
+            List<BilheteDestino> bilhetesParaManter = bilhetesComprados.Where(b =>
                 bilhetesSelecionados.Contains($"{b.Origem.Nome}-{b.Destino.Nome}")).ToList();
-            
+
             jogador.AdicionarBilhetesDestino(bilhetesParaManter);
 
             // Devolver bilhetes não selecionados ao baralho
-            var bilhetesParaDevolver = bilhetesComprados.Except(bilhetesParaManter).ToList();
+            List<BilheteDestino> bilhetesParaDevolver = bilhetesComprados.Except(bilhetesParaManter).ToList();
             partida.BaralhoCartasDestino.DevolverBilhetes(bilhetesParaDevolver);
 
             partida.TurnoAtual.ExecutarAcao(Acao.COMPRAR_BILHETES_DESTINO);
@@ -206,7 +199,7 @@ namespace TicketToRide.Application.Services
 
         public TurnoDTO ProximoTurno(string partidaId)
         {
-            var partida = _partidaRepository.ObterPartida(partidaId);
+            Partida? partida = _partidaRepository.ObterPartida(partidaId);
             if (partida == null)
             {
                 throw new ArgumentException("Partida não encontrada");
@@ -222,7 +215,7 @@ namespace TicketToRide.Application.Services
                 throw new InvalidOperationException("Turno atual não foi completado");
             }
 
-            var proximoTurno = partida.CriarProximoTurno();
+            Turno proximoTurno = partida.CriarProximoTurno();
             _partidaRepository.SalvarPartida(partida);
 
             return MapearTurnoParaDTO(proximoTurno);
@@ -230,7 +223,7 @@ namespace TicketToRide.Application.Services
 
         public TurnoDTO PassarTurno(string partidaId, string jogadorId)
         {
-            var partida = _partidaRepository.ObterPartida(partidaId);
+            Partida? partida = _partidaRepository.ObterPartida(partidaId);
             if (partida == null)
             {
                 throw new ArgumentException("Partida não encontrada");
@@ -248,7 +241,7 @@ namespace TicketToRide.Application.Services
 
             // Marcar ação como completada e passar para o próximo turno
             partida.TurnoAtual.ExecutarAcao(Acao.COMPRAR_CARTAS_VEICULO); // Ação padrão para passar turno
-            var proximoTurno = partida.CriarProximoTurno();
+            Turno proximoTurno = partida.CriarProximoTurno();
             _partidaRepository.SalvarPartida(partida);
 
             return MapearTurnoParaDTO(proximoTurno);

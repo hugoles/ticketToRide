@@ -1,6 +1,7 @@
 using TicketToRide.Domain.Entities;
 using TicketToRide.Domain.Interfaces;
 using TicketToRide.Application.DTOs;
+using TicketToRide.Domain.Enums;
 
 namespace TicketToRide.Application.Services
 {
@@ -33,7 +34,7 @@ namespace TicketToRide.Application.Services
 
             var jogadorId = $"JOGADOR_{partida.Jogadores.Count + 1}";
             var jogador = new Jogador(jogadorId, nome);
-            
+
             partida.AdicionarJogador(jogador);
             _partidaRepository.SalvarPartida(partida);
 
@@ -111,7 +112,7 @@ namespace TicketToRide.Application.Services
                 {
                     Nome = c.Nome,
                     Cor = c.Cor,
-                    EhLocomotiva = c.EhLocomotiva,
+                    EhLocomotiva = c.Cor == Cor.LOCOMOTIVA,
                     Descricao = c.ToString()
                 }).ToList(),
                 BilhetesDestino = jogador.BilhetesDestino.Select(b => new BilheteDestinoDTO
@@ -119,7 +120,7 @@ namespace TicketToRide.Application.Services
                     Origem = b.Origem.Nome,
                     Destino = b.Destino.Nome,
                     Pontos = b.Pontos,
-                    IsCompleto = false, // Será calculado no contexto da partida
+                    IsCompleto = false,
                     Descricao = b.ToString()
                 }).ToList(),
                 RotasConquistadas = jogador.RotasConquistadas.Select(r => new RotaDTO
@@ -130,9 +131,7 @@ namespace TicketToRide.Application.Services
                     Cor = r.Cor,
                     Tamanho = r.Tamanho,
                     EhDupla = r.EhDupla,
-                    JogadorId = r.Jogador?.Id,
-                    JogadorNome = r.Jogador?.Nome,
-                    EstaDisponivel = r.EstaDisponivel(),
+                    EstaDisponivel = r.Disponivel,
                     Pontos = r.CalcularPontos()
                 }).ToList(),
                 NumeroCartas = jogador.MaoCartas.Count,

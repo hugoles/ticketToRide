@@ -13,8 +13,7 @@ class JogoManager {
         try {
             this.estadoAtual = await this.app.makeApiCall(`/api/partida/${this.partidaId}`);
             this.atualizarInterface();
-            
-            // Atualizar status da navbar
+
             if (this.estadoAtual.turnoAtual) {
                 const status = `Turno ${this.estadoAtual.turnoAtual.numero} - ${this.estadoAtual.turnoAtual.jogadorNome}`;
                 console.log('Atualizando status da navbar:', status);
@@ -23,7 +22,6 @@ class JogoManager {
                 console.log('Atualizando status da navbar: Partida em andamento');
                 this.app.updateGameStatus('Partida em andamento');
             }
-
         } catch (error) {
             console.error('Erro ao atualizar estado:', error);
             this.app.showNotification(`Erro ao atualizar estado: ${error.message}`, 'danger');
@@ -46,7 +44,6 @@ class JogoManager {
             await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/passar`, 'POST', { jogadorId: jogadorAtual });
             await this.atualizarEstado();
             this.app.showNotification('Turno passado!', 'success');
-
         } catch (error) {
             console.error('Erro ao passar turno:', error);
             this.app.showNotification(`Erro ao passar turno: ${error.message}`, 'danger');
@@ -66,8 +63,7 @@ class JogoManager {
         if (!this.estadoAtual.turnoAtual) return;
 
         const turno = this.estadoAtual.turnoAtual;
-        // Sempre mostrar que é a vez do jogador atual (não verificar se é "minha vez")
-        
+
         turnoElement.innerHTML = `
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -114,7 +110,7 @@ class JogoManager {
     atualizarRotasDisponiveis() {
         const rotasElement = document.getElementById('available-routes');
         const rotasDisponiveis = this.estadoAtual.rotas.filter(r => r.estaDisponivel);
-        
+
         if (rotasDisponiveis.length === 0) {
             rotasElement.innerHTML = '<div class="alert alert-info">Nenhuma rota disponível</div>';
             return;
@@ -143,7 +139,7 @@ class JogoManager {
                     <td>${rota.tamanho}</td>
                     <td>${rota.pontos}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary" 
+                        <button class="btn btn-sm btn-outline-primary"
                                 onclick="selecionarRota('${rota.id}')"
                                 ${!podeReivindicar ? 'disabled' : ''}>
                             ${podeReivindicar ? 'Reivindicar' : 'Sem cartas'}
@@ -160,15 +156,14 @@ class JogoManager {
     atualizarMinhasCartas() {
         const cartasElement = document.getElementById('my-cards');
         if (!this.estadoAtual.turnoAtual) return;
-        
+
         const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
         const meuJogador = this.estadoAtual.jogadores.find(j => j.id === jogadorAtual);
-        
+
         if (!meuJogador) return;
 
         cartasElement.innerHTML = '';
 
-        // Agrupar cartas por cor
         const cartasPorCor = {};
         meuJogador.maoCartas.forEach(carta => {
             if (!cartasPorCor[carta.cor]) {
@@ -196,10 +191,10 @@ class JogoManager {
     atualizarMeusBilhetes() {
         const bilhetesElement = document.getElementById('my-tickets');
         if (!this.estadoAtual.turnoAtual) return;
-        
+
         const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
         const meuJogador = this.estadoAtual.jogadores.find(j => j.id === jogadorAtual);
-        
+
         if (!meuJogador) return;
 
         bilhetesElement.innerHTML = '';
@@ -225,13 +220,13 @@ class JogoManager {
 
     podeReivindicarRota(rota) {
         if (!this.estadoAtual.turnoAtual) return false;
-        
+
         const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
         const meuJogador = this.estadoAtual.jogadores.find(j => j.id === jogadorAtual);
         if (!meuJogador) return false;
 
         // Verificar se tem cartas suficientes da cor correta
-        const cartasCor = meuJogador.maoCartas.filter(c => 
+        const cartasCor = meuJogador.maoCartas.filter(c =>
             c.cor === rota.cor || c.ehLocomotiva
         );
 
@@ -249,7 +244,6 @@ class JogoManager {
             await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/comprar-cartas`, 'POST', { jogadorId: jogadorAtual });
             await this.atualizarEstado();
             this.app.showNotification('Cartas compradas com sucesso!', 'success');
-
         } catch (error) {
             console.error('Erro ao comprar cartas:', error);
             this.app.showNotification(`Erro ao comprar cartas: ${error.message}`, 'danger');
@@ -269,7 +263,6 @@ class JogoManager {
         }
 
         if (!this.rotaSelecionada) {
-            // Selecionar automaticamente a primeira rota disponível
             const rotasDisponiveis = this.estadoAtual.rotas.filter(r => r.estaDisponivel);
             if (rotasDisponiveis.length === 0) {
                 this.app.showNotification('Não há rotas disponíveis', 'warning');
@@ -280,7 +273,7 @@ class JogoManager {
 
         const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
         try {
-            await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/reivindicar-rota`, 'POST', { 
+            await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/reivindicar-rota`, 'POST', {
                 jogadorId: jogadorAtual,
                 rotaId: this.rotaSelecionada
             });
@@ -288,7 +281,6 @@ class JogoManager {
             this.rotaSelecionada = null;
             await this.atualizarEstado();
             this.app.showNotification('Rota reivindicada com sucesso!', 'success');
-
         } catch (error) {
             console.error('Erro ao reivindicar rota:', error);
             this.app.showNotification(`Erro ao reivindicar rota: ${error.message}`, 'danger');
@@ -302,16 +294,14 @@ class JogoManager {
         }
 
         const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
-        // Por simplicidade, vamos comprar bilhetes sem seleção
         try {
-            await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/comprar-bilhetes`, 'POST', { 
+            await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/comprar-bilhetes`, 'POST', {
                 jogadorId: jogadorAtual,
-                bilhetesSelecionados: [] // Será selecionado automaticamente
+                bilhetesSelecionados: []
             });
 
             await this.atualizarEstado();
             this.app.showNotification('Bilhetes comprados com sucesso!', 'success');
-
         } catch (error) {
             console.error('Erro ao comprar bilhetes:', error);
             this.app.showNotification(`Erro ao comprar bilhetes: ${error.message}`, 'danger');
@@ -322,7 +312,6 @@ class JogoManager {
         try {
             const partida = await this.app.makeApiCall(`/api/partida/${this.partidaId}/finalizar`, 'POST');
             this.mostrarResultado(partida);
-
         } catch (error) {
             console.error('Erro ao finalizar partida:', error);
             this.app.showNotification(`Erro ao finalizar partida: ${error.message}`, 'danger');
@@ -331,14 +320,14 @@ class JogoManager {
 
     mostrarResultado(partida) {
         const ranking = partida.jogadores.sort((a, b) => b.pontuacao - a.pontuacao);
-        
+
         const resultadoElement = document.getElementById('final-ranking');
         let html = '<h4>Ranking Final</h4><div class="list-group">';
-        
+
         ranking.forEach((jogador, index) => {
             const posicao = index + 1;
             const medalha = posicao === 1 ? '🥇' : posicao === 2 ? '🥈' : posicao === 3 ? '🥉' : '';
-            
+
             html += `
                 <div class="list-group-item d-flex justify-content-between align-items-center">
                     <div>
@@ -349,10 +338,10 @@ class JogoManager {
                 </div>
             `;
         });
-        
+
         html += '</div>';
         resultadoElement.innerHTML = html;
-        
+
         this.app.showScreen('result-screen');
         this.app.updateGameStatus('Partida finalizada');
     }
@@ -385,7 +374,7 @@ class JogoManager {
     getCorNome(corNumero) {
         const cores = {
             0: 'Vermelho',
-            1: 'Azul', 
+            1: 'Azul',
             2: 'Verde',
             3: 'Amarelo',
             4: 'Preto',
@@ -399,7 +388,6 @@ class JogoManager {
     }
 }
 
-// Global functions for HTML onclick events
 function atualizarEstado() {
     if (window.jogoManager) {
         window.jogoManager.atualizarEstado();

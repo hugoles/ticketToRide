@@ -15,27 +15,26 @@ namespace TicketToRide.Domain.Entities
 
         public bool IsCompleto(List<Rota> rotasJogador)
         {
-            // Verificar se existe um caminho entre origem e destino usando as rotas do jogador
             return ExisteCaminho(Origem, Destino, rotasJogador);
         }
 
-        private bool ExisteCaminho(Cidade origem, Cidade destino, List<Rota> rotas)
+        private static bool ExisteCaminho(Cidade origem, Cidade destino, List<Rota> rotas)
         {
             if (origem.Equals(destino))
             {
                 return true;
             }
 
-            var visitadas = new HashSet<Cidade>();
-            var fila = new Queue<Cidade>();
+            HashSet<Cidade> visitadas = new();
+            Queue<Cidade> fila = new();
             fila.Enqueue(origem);
             visitadas.Add(origem);
 
             while (fila.Count > 0)
             {
-                var cidadeAtual = fila.Dequeue();
+                Cidade cidadeAtual = fila.Dequeue();
 
-                foreach (var rota in rotas)
+                foreach (Rota rota in rotas)
                 {
                     Cidade? proximaCidade = null;
 

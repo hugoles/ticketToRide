@@ -2,7 +2,7 @@ namespace TicketToRide.Domain.Entities
 {
     public abstract class Carta
     {
-        public string Nome { get; set; } = string.Empty;
+        public string Nome { get; set; }
 
         protected Carta(string nome)
         {

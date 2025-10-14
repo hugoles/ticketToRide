@@ -4,13 +4,13 @@ namespace TicketToRide.Domain.Entities
 {
     public class Rota
     {
-        public string Id { get; set; } = string.Empty;
+        public string Id { get; set; }
         public Cidade Origem { get; set; }
         public Cidade Destino { get; set; }
         public Cor Cor { get; set; }
         public int Tamanho { get; set; }
         public bool EhDupla { get; set; }
-        public Jogador? Jogador { get; set; } // null = disponível
+        public bool Disponivel { get; set; } = true;
 
         public Rota(string id, Cidade origem, Cidade destino, Cor cor, int tamanho, bool ehDupla = false)
         {
@@ -36,48 +36,15 @@ namespace TicketToRide.Domain.Entities
             };
         }
 
-        public bool EstaDisponivel()
-        {
-            return Jogador == null;
-        }
-
         public bool PodeSerConquistadaPor(Jogador jogador)
         {
-            if (!EstaDisponivel())
+            if (!Disponivel)
             {
                 return false;
             }
 
-            // Verificar se o jogador tem cartas suficientes da cor correta
-            var cartasNecessarias = jogador.ObterCartasParaCor(Cor);
+            List<CartaVeiculo> cartasNecessarias = jogador.ObterCartasParaCor(Cor);
             return cartasNecessarias.Count >= Tamanho;
-        }
-
-        public bool Conquistar(Jogador jogador)
-        {
-            if (!PodeSerConquistadaPor(jogador))
-            {
-                return false;
-            }
-
-            Jogador = jogador;
-            return true;
-        }
-
-        public string GetId()
-        {
-            return Id;
-        }
-
-        public int GetTamanho()
-        {
-            return Tamanho;
-        }
-
-        public override string ToString()
-        {
-            var status = EstaDisponivel() ? "Disponível" : $"Conquistada por {Jogador?.Nome}";
-            return $"{Origem.Nome} → {Destino.Nome} ({Cor}, {Tamanho} vagões) - {status}";
         }
     }
 }

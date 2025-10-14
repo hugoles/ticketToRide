@@ -1,20 +1,15 @@
-using TicketToRide.Domain.Enums;
-
 namespace TicketToRide.Domain.Entities
 {
     public class Partida
     {
         public string Id { get; set; } = string.Empty;
-        public List<Jogador> Jogadores { get; set; } = new();
+        public List<Jogador> Jogadores { get; set; } = [];
         public Tabuleiro Tabuleiro { get; set; }
         public BaralhoCartasDestino BaralhoCartasDestino { get; set; }
         public BaralhoCartasVeiculo BaralhoCartasVeiculo { get; set; }
         public Turno? TurnoAtual { get; set; }
         public bool PartidaIniciada { get; set; } = false;
         public bool PartidaFinalizada { get; set; } = false;
-        public DateTime DataCriacao { get; set; } = DateTime.Now;
-        public DateTime? DataInicio { get; set; }
-        public DateTime? DataFim { get; set; }
 
         public Partida()
         {
@@ -36,16 +31,13 @@ namespace TicketToRide.Domain.Entities
             }
 
             PartidaIniciada = true;
-            DataInicio = DateTime.Now;
 
-            // Distribuir cartas iniciais para cada jogador
-            foreach (var jogador in Jogadores)
+            foreach (Jogador jogador in Jogadores)
             {
-                var cartasIniciais = BaralhoCartasVeiculo.ComprarVarias(4);
+                List<CartaVeiculo> cartasIniciais = BaralhoCartasVeiculo.ComprarVarias(4);
                 jogador.ComprarCartas(cartasIniciais);
             }
 
-            // Criar primeiro turno
             TurnoAtual = new Turno(1, Jogadores[0]);
 
             return this;
@@ -59,24 +51,21 @@ namespace TicketToRide.Domain.Entities
             }
 
             PartidaFinalizada = true;
-            DataFim = DateTime.Now;
 
-            // Calcular pontuação final de todos os jogadores
             CalcularPontuacaoFinal();
         }
 
         public void CalcularPontuacaoFinal()
         {
-            foreach (var jogador in Jogadores)
+            foreach (Jogador jogador in Jogadores)
             {
                 jogador.AtualizarPontuacao();
             }
 
-            // Adicionar bônus da rota contínua mais longa
-            var vencedorRotaLonga = CalcularRotaMaisLonga();
+            Jogador? vencedorRotaLonga = CalcularRotaMaisLonga();
             if (vencedorRotaLonga != null)
             {
-                vencedorRotaLonga.Pontuacao += 10; // Bônus de 10 pontos
+                vencedorRotaLonga.Pontuacao += 10;
             }
         }
 
@@ -85,9 +74,9 @@ namespace TicketToRide.Domain.Entities
             Jogador? vencedor = null;
             int maiorComprimento = 0;
 
-            foreach (var jogador in Jogadores)
+            foreach (Jogador jogador in Jogadores)
             {
-                var comprimento = jogador.CalcularComprimentoRotaContinuo();
+                int comprimento = jogador.CalcularComprimentoRotaContinua();
                 if (comprimento > maiorComprimento)
                 {
                     maiorComprimento = comprimento;
@@ -98,16 +87,6 @@ namespace TicketToRide.Domain.Entities
             return vencedor;
         }
 
-        public Jogador? IdentificarVencedor()
-        {
-            if (!PartidaFinalizada)
-            {
-                return null;
-            }
-
-            return Jogadores.OrderByDescending(j => j.Pontuacao).FirstOrDefault();
-        }
-
         public Turno CriarProximoTurno()
         {
             if (TurnoAtual == null)
@@ -115,8 +94,8 @@ namespace TicketToRide.Domain.Entities
                 throw new InvalidOperationException("Não há turno atual");
             }
 
-            var proximoJogador = ObterProximoJogador(TurnoAtual.JogadorAtual);
-            var proximoTurno = new Turno(TurnoAtual.Numero + 1, proximoJogador);
+            Jogador proximoJogador = ObterProximoJogador(TurnoAtual.JogadorAtual);
+            Turno proximoTurno = new(TurnoAtual.Numero + 1, proximoJogador);
             TurnoAtual = proximoTurno;
 
             return proximoTurno;
@@ -124,14 +103,9 @@ namespace TicketToRide.Domain.Entities
 
         private Jogador ObterProximoJogador(Jogador jogadorAtual)
         {
-            var indiceAtual = Jogadores.IndexOf(jogadorAtual);
-            var proximoIndice = (indiceAtual + 1) % Jogadores.Count;
+            int indiceAtual = Jogadores.IndexOf(jogadorAtual);
+            int proximoIndice = (indiceAtual + 1) % Jogadores.Count;
             return Jogadores[proximoIndice];
-        }
-
-        public bool IsPartidaFinalizada()
-        {
-            return PartidaFinalizada;
         }
 
         public void AdicionarJogador(Jogador jogador)
@@ -161,22 +135,12 @@ namespace TicketToRide.Domain.Entities
 
         public List<Jogador> ObterRanking()
         {
-            return Jogadores.OrderByDescending(j => j.Pontuacao).ToList();
-        }
-
-        public int ObterNumeroJogadores()
-        {
-            return Jogadores.Count;
-        }
-
-        public bool EhVezDoJogador(string jogadorId)
-        {
-            return TurnoAtual?.JogadorAtual.Id == jogadorId;
+            return [.. Jogadores.OrderByDescending(j => j.Pontuacao)];
         }
 
         public override string ToString()
         {
-            var status = PartidaFinalizada ? "Finalizada" : PartidaIniciada ? "Em Andamento" : "Aguardando";
+            string status = PartidaFinalizada ? "Finalizada" : PartidaIniciada ? "Em Andamento" : "Aguardando";
             return $"Partida {Id} - {Jogadores.Count} jogadores - {status}";
         }
     }

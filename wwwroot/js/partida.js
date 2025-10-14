@@ -27,21 +27,18 @@ class PartidaManager {
         }
 
         try {
-            // Se não há partida criada, criar uma
             if (!this.partidaId) {
                 await this.criarPartida();
             }
 
-            // Adicionar jogador à partida
             const jogador = await this.app.makeApiCall(`/api/jogador/partida/${this.partidaId}/jogador`, 'POST', { nome: nome });
             this.jogadores.push(jogador);
-            
+
             nomeInput.value = '';
             this.atualizarListaJogadores();
             this.verificarPodeIniciar();
 
             this.app.showNotification(`Jogador ${nome} adicionado com sucesso!`, 'success');
-
         } catch (error) {
             console.error('Erro ao adicionar jogador:', error);
             this.app.showNotification(`Erro ao adicionar jogador: ${error.message}`, 'danger');
@@ -53,9 +50,8 @@ class PartidaManager {
             const partida = await this.app.makeApiCall('/api/partida/criar', 'POST');
             this.partidaId = partida.id;
             this.app.currentPartidaId = this.partidaId;
-            
-            console.log('Partida criada:', this.partidaId);
 
+            console.log('Partida criada:', this.partidaId);
         } catch (error) {
             console.error('Erro ao criar partida:', error);
             this.app.showNotification(`Erro ao criar partida: ${error.message}`, 'danger');
@@ -76,21 +72,16 @@ class PartidaManager {
 
         try {
             const partida = await this.app.makeApiCall(`/api/partida/${this.partidaId}/iniciar`, 'POST', { numJogadores: this.jogadores.length });
-            
-            // Definir o primeiro jogador como jogador atual
+
             this.app.currentJogadorId = partida.turnoAtual.jogadorId;
-            
-            // Inicializar o jogo manager
+
             window.jogoManager = new JogoManager(this.partidaId, this.app.currentJogadorId);
-            
-            // Mudar para tela do jogo
+
             this.app.showScreen('game-screen');
-            
-            // Atualizar estado do jogo (isso também atualiza o status da navbar)
+
             await window.jogoManager.atualizarEstado();
 
             this.app.showNotification('Partida iniciada com sucesso!', 'success');
-
         } catch (error) {
             console.error('Erro ao iniciar partida:', error);
             this.app.showNotification(`Erro ao iniciar partida: ${error.message}`, 'danger');
@@ -122,7 +113,7 @@ class PartidaManager {
 
     async removerJogador(index) {
         const jogador = this.jogadores[index];
-        
+
         try {
             await this.app.makeApiCall(`/api/jogador/partida/${this.partidaId}/jogador/${jogador.id}`, 'DELETE');
 
@@ -131,7 +122,6 @@ class PartidaManager {
             this.verificarPodeIniciar();
 
             this.app.showNotification(`Jogador ${jogador.nome} removido`, 'info');
-
         } catch (error) {
             console.error('Erro ao remover jogador:', error);
             this.app.showNotification(`Erro ao remover jogador: ${error.message}`, 'danger');
@@ -139,34 +129,29 @@ class PartidaManager {
     }
 
     novaPartida() {
-        // Reset state
         this.partidaId = null;
         this.jogadores = [];
         this.app.currentPartidaId = null;
         this.app.currentJogadorId = null;
-        
-        // Reset UI
+
         document.getElementById('player-name').value = '';
         this.atualizarListaJogadores();
         this.verificarPodeIniciar();
-        
-        // Show setup screen
+
         this.app.showScreen('setup-screen');
         this.app.updateGameStatus('Aguardando configuração');
-        
+
         this.app.showNotification('Nova partida iniciada', 'info');
     }
 }
 
-// Global function for removing players
 function removerJogador(index) {
     if (window.partidaManager) {
         window.partidaManager.removerJogador(index);
     }
 }
 
-// Initialize partida manager when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     window.partidaManager = new PartidaManager();
     console.log('Partida manager initialized');
 });

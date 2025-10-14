@@ -15,11 +15,6 @@ namespace TicketToRide.Domain.Entities
             JogadorAtual = jogadorAtual;
         }
 
-        public Jogador GetJogadorAtual()
-        {
-            return JogadorAtual;
-        }
-
         public void ExecutarAcao(Acao acao)
         {
             AcaoRealizada = acao;
@@ -29,18 +24,6 @@ namespace TicketToRide.Domain.Entities
         public bool PodeExecutarAcao()
         {
             return !AcaoCompletada;
-        }
-
-        public void ResetarAcao()
-        {
-            AcaoRealizada = null;
-            AcaoCompletada = false;
-        }
-
-        public override string ToString()
-        {
-            var status = AcaoCompletada ? $"Ação: {AcaoRealizada}" : "Aguardando ação";
-            return $"Turno {Numero} - {JogadorAtual.Nome} - {status}";
         }
     }
 }

@@ -2,7 +2,7 @@ namespace TicketToRide.Domain.Entities
 {
     public class Cidade
     {
-        public string Nome { get; set; } = string.Empty;
+        public string Nome { get; set; }
 
         public Cidade(string nome)
         {
@@ -21,11 +21,6 @@ namespace TicketToRide.Domain.Entities
                 return Nome.Equals(outraCidade.Nome, StringComparison.OrdinalIgnoreCase);
             }
             return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return Nome.GetHashCode();
         }
     }
 }

@@ -17,7 +17,6 @@ class TicketToRideApp {
     }
 
     setupEventListeners() {
-        // Event listeners for game setup
         document.getElementById('adicionarJogadorBtn')?.addEventListener('click', () => {
             adicionarJogador();
         });
@@ -30,7 +29,6 @@ class TicketToRideApp {
             novaPartida();
         });
 
-        // Event listeners for game actions
         document.getElementById('comprarCartasBtn')?.addEventListener('click', () => {
             comprarCartas();
         });
@@ -99,11 +97,11 @@ class TicketToRideApp {
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-        
+
         const container = document.getElementById('notifications');
         if (container) {
             container.appendChild(notification);
-            
+
             // Auto remove after 5 seconds
             setTimeout(() => {
                 if (notification.parentNode) {
@@ -127,7 +125,7 @@ class TicketToRideApp {
             }
 
             const response = await fetch(`${this.apiBaseUrl}${endpoint}`, options);
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -143,10 +141,10 @@ class TicketToRideApp {
     toggleDarkMode() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
+
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
-        
+
         const darkModeBtn = document.getElementById('dark-mode-btn');
         if (darkModeBtn) {
             if (newTheme === 'dark') {
@@ -160,7 +158,7 @@ class TicketToRideApp {
     initDarkMode() {
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
-        
+
         const darkModeBtn = document.getElementById('dark-mode-btn');
         if (darkModeBtn) {
             if (savedTheme === 'dark') {
@@ -228,6 +226,6 @@ function passarTurno() {
 }
 
 // Initialize the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     window.ticketToRideApp = new TicketToRideApp();
 });

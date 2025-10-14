@@ -1,7 +1,7 @@
-using TicketToRide.Domain.Entities;
-using TicketToRide.Domain.Interfaces;
 using TicketToRide.Application.DTOs;
-using TicketToRide.Application;
+using TicketToRide.Domain.Entities;
+using TicketToRide.Domain.Enums;
+using TicketToRide.Domain.Interfaces;
 
 namespace TicketToRide.Application.Services
 {
@@ -16,7 +16,7 @@ namespace TicketToRide.Application.Services
 
         public PartidaDTO CriarPartida()
         {
-            var partida = _partidaRepository.CriarPartida();
+            Partida partida = _partidaRepository.CriarPartida();
             InicializarDadosJogo(partida);
             _partidaRepository.SalvarPartida(partida);
             return MapearParaDTO(partida);
@@ -24,13 +24,13 @@ namespace TicketToRide.Application.Services
 
         public PartidaDTO? ObterPartida(string id)
         {
-            var partida = _partidaRepository.ObterPartida(id);
+            Partida? partida = _partidaRepository.ObterPartida(id);
             return partida != null ? MapearParaDTO(partida) : null;
         }
 
         public PartidaDTO IniciarPartida(string id, int numJogadores)
         {
-            var partida = _partidaRepository.ObterPartida(id);
+            Partida? partida = _partidaRepository.ObterPartida(id);
             if (partida == null)
             {
                 throw new ArgumentException("Partida não encontrada");
@@ -43,7 +43,7 @@ namespace TicketToRide.Application.Services
 
         public PartidaDTO FinalizarPartida(string id)
         {
-            var partida = _partidaRepository.ObterPartida(id);
+            Partida? partida = _partidaRepository.ObterPartida(id);
             if (partida == null)
             {
                 throw new ArgumentException("Partida não encontrada");
@@ -56,7 +56,7 @@ namespace TicketToRide.Application.Services
 
         public List<PartidaDTO> ObterTodasPartidas()
         {
-            var partidas = _partidaRepository.ObterTodasPartidas();
+            List<Partida> partidas = _partidaRepository.ObterTodasPartidas();
             return partidas.Select(MapearParaDTO).ToList();
         }
 
@@ -68,12 +68,12 @@ namespace TicketToRide.Application.Services
         private void InicializarDadosJogo(Partida partida)
         {
             // Inicializar tabuleiro com rotas
-            var rotas = DadosJogo.ObterRotas();
+            List<Rota> rotas = DadosJogo.ObterRotas();
             partida.Tabuleiro.AdicionarRotas(rotas);
 
             // Inicializar baralho de bilhetes de destino
-            var bilhetes = DadosJogo.ObterBilhetesDestino();
-            partida.BaralhoCartasDestino.AdicionarBilhetes(bilhetes);
+            List<BilheteDestino> bilhetes = DadosJogo.ObterBilhetesDestino();
+            partida.BaralhoCartasDestino.InicializarBaralho(bilhetes);
         }
 
         private PartidaDTO MapearParaDTO(Partida partida)
@@ -81,15 +81,12 @@ namespace TicketToRide.Application.Services
             return new PartidaDTO
             {
                 Id = partida.Id,
-                Jogadores = partida.Jogadores.Select(MapearJogadorParaDTO).ToList(),
-                Rotas = partida.Tabuleiro.Rotas.Select(MapearRotaParaDTO).ToList(),
+                Jogadores = partida.Jogadores.ConvertAll(MapearJogadorParaDTO),
+                Rotas = partida.Tabuleiro.Rotas.ConvertAll(MapearRotaParaDTO),
                 TurnoAtual = partida.TurnoAtual != null ? MapearTurnoParaDTO(partida.TurnoAtual) : null,
                 PartidaIniciada = partida.PartidaIniciada,
                 PartidaFinalizada = partida.PartidaFinalizada,
-                DataCriacao = partida.DataCriacao,
-                DataInicio = partida.DataInicio,
-                DataFim = partida.DataFim,
-                NumeroJogadores = partida.ObterNumeroJogadores(),
+                NumeroJogadores = partida.Jogadores.Count,
                 PodeIniciar = partida.PodeIniciar()
             };
         }
@@ -102,9 +99,9 @@ namespace TicketToRide.Application.Services
                 Nome = jogador.Nome,
                 Pontuacao = jogador.Pontuacao,
                 PecasTremRestante = jogador.PecasTremRestante,
-                MaoCartas = jogador.MaoCartas.Select(MapearCartaParaDTO).ToList(),
-                BilhetesDestino = jogador.BilhetesDestino.Select(MapearBilheteParaDTO).ToList(),
-                RotasConquistadas = jogador.RotasConquistadas.Select(MapearRotaParaDTO).ToList(),
+                MaoCartas = jogador.MaoCartas.ConvertAll(MapearCartaParaDTO),
+                BilhetesDestino = jogador.BilhetesDestino.ConvertAll(MapearBilheteParaDTO),
+                RotasConquistadas = jogador.RotasConquistadas.ConvertAll(MapearRotaParaDTO),
                 NumeroCartas = jogador.MaoCartas.Count,
                 NumeroBilhetes = jogador.BilhetesDestino.Count,
                 NumeroRotas = jogador.RotasConquistadas.Count
@@ -121,9 +118,7 @@ namespace TicketToRide.Application.Services
                 Cor = rota.Cor,
                 Tamanho = rota.Tamanho,
                 EhDupla = rota.EhDupla,
-                JogadorId = rota.Jogador?.Id,
-                JogadorNome = rota.Jogador?.Nome,
-                EstaDisponivel = rota.EstaDisponivel(),
+                EstaDisponivel = rota.Disponivel,
                 Pontos = rota.CalcularPontos()
             };
         }
@@ -134,7 +129,7 @@ namespace TicketToRide.Application.Services
             {
                 Nome = carta.Nome,
                 Cor = carta.Cor,
-                EhLocomotiva = carta.EhLocomotiva,
+                EhLocomotiva = carta.Cor == Cor.LOCOMOTIVA,
                 Descricao = carta.ToString()
             };
         }

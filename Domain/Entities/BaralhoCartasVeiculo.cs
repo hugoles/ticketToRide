@@ -6,18 +6,14 @@ namespace TicketToRide.Domain.Entities
     {
         public BaralhoCartasVeiculo()
         {
-            InicializarBaralho();
+            InicializarBaralho([]);
         }
 
-        private void InicializarBaralho()
+        public override void InicializarBaralho(List<CartaVeiculo> cartas)
         {
-            MonteCompra.Clear();
-            MonteDescarte.Clear();
+            Cor[] cores = [Cor.VERMELHO, Cor.AZUL, Cor.VERDE, Cor.AMARELO, Cor.PRETO, Cor.BRANCO, Cor.LARANJA, Cor.ROSA];
 
-            // 12 cartas de cada cor (exceto locomotiva)
-            var cores = new[] { Cor.VERMELHO, Cor.AZUL, Cor.VERDE, Cor.AMARELO, Cor.PRETO, Cor.BRANCO, Cor.LARANJA, Cor.ROSA };
-            
-            foreach (var cor in cores)
+            foreach (Cor cor in cores)
             {
                 for (int i = 0; i < 12; i++)
                 {
@@ -25,32 +21,12 @@ namespace TicketToRide.Domain.Entities
                 }
             }
 
-            // 14 locomotivas (coringas)
             for (int i = 0; i < 14; i++)
             {
-                MonteCompra.Add(new CartaVeiculo(Cor.LOCOMOTIVA, true));
+                MonteCompra.Add(new CartaVeiculo(Cor.LOCOMOTIVA));
             }
 
             Embaralhar();
-        }
-
-        public List<CartaVeiculo> ObterCartasVisiveis(int quantidade = 5)
-        {
-            var cartasVisiveis = new List<CartaVeiculo>();
-            
-            // Se não há cartas suficientes no monte, embaralhar o descarte
-            if (MonteCompra.Count < quantidade)
-            {
-                Embaralhar();
-            }
-
-            // Pegar as primeiras cartas do monte
-            for (int i = 0; i < quantidade && i < MonteCompra.Count; i++)
-            {
-                cartasVisiveis.Add(MonteCompra[i]);
-            }
-
-            return cartasVisiveis;
         }
 
         public CartaVeiculo? ComprarCartaVisivel(int indice)
@@ -60,14 +36,9 @@ namespace TicketToRide.Domain.Entities
                 return null;
             }
 
-            var carta = MonteCompra[indice];
+            CartaVeiculo carta = MonteCompra[indice];
             MonteCompra.RemoveAt(indice);
             return carta;
-        }
-
-        public void ReporCartaVisivel(CartaVeiculo carta)
-        {
-            MonteCompra.Insert(0, carta);
         }
     }
 }

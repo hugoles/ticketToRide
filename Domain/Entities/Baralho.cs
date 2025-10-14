@@ -1,15 +1,33 @@
-using TicketToRide.Domain.Entities;
-
 namespace TicketToRide.Domain.Entities
 {
     public abstract class Baralho<T> where T : Carta
     {
-        protected List<T> MonteCompra { get; set; } = new();
-        protected List<T> MonteDescarte { get; set; } = new();
+        protected List<T> MonteCompra { get; set; } = [];
+        protected List<T> MonteDescarte { get; set; } = [];
+
+        public abstract void InicializarBaralho(List<T> cartas);
 
         public bool TemCarta()
         {
             return MonteCompra.Count > 0;
+        }
+
+        public List<T> ComprarVarias(int quantidade)
+        {
+            List<T> cartas = new();
+            for (int i = 0; i < quantidade; i++)
+            {
+                T? carta = Comprar();
+                if (carta != null)
+                {
+                    cartas.Add(carta);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            return cartas;
         }
 
         public T? Comprar()
@@ -22,11 +40,11 @@ namespace TicketToRide.Domain.Entities
                 }
                 else
                 {
-                    return null; // Baralho vazio
+                    return null;
                 }
             }
 
-            var carta = MonteCompra[0];
+            T carta = MonteCompra[0];
             MonteCompra.RemoveAt(0);
             return carta;
         }
@@ -38,45 +56,15 @@ namespace TicketToRide.Domain.Entities
 
         public void Embaralhar()
         {
-            // Mover cartas do descarte para o monte de compra
             MonteCompra.AddRange(MonteDescarte);
             MonteDescarte.Clear();
 
-            // Embaralhar usando Fisher-Yates
-            var random = new Random();
+            Random random = new();
             for (int i = MonteCompra.Count - 1; i > 0; i--)
             {
                 int j = random.Next(i + 1);
                 (MonteCompra[i], MonteCompra[j]) = (MonteCompra[j], MonteCompra[i]);
             }
-        }
-
-        public List<T> ComprarVarias(int quantidade)
-        {
-            var cartas = new List<T>();
-            for (int i = 0; i < quantidade; i++)
-            {
-                var carta = Comprar();
-                if (carta != null)
-                {
-                    cartas.Add(carta);
-                }
-                else
-                {
-                    break; // Baralho vazio
-                }
-            }
-            return cartas;
-        }
-
-        public int QuantidadeRestante()
-        {
-            return MonteCompra.Count;
-        }
-
-        public int QuantidadeDescarte()
-        {
-            return MonteDescarte.Count;
         }
     }
 }

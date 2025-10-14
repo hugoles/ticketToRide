@@ -4,19 +4,10 @@ namespace TicketToRide.Domain.Entities
     {
         public BaralhoCartasDestino()
         {
-            InicializarBaralho();
+            InicializarBaralho([]);
         }
 
-        private void InicializarBaralho()
-        {
-            MonteCompra.Clear();
-            MonteDescarte.Clear();
-
-            // Os bilhetes de destino serão inicializados pela classe DadosJogo
-            // Esta classe apenas gerencia o baralho
-        }
-
-        public void AdicionarBilhetes(List<BilheteDestino> bilhetes)
+        public override void InicializarBaralho(List<BilheteDestino> bilhetes)
         {
             MonteCompra.AddRange(bilhetes);
             Embaralhar();
@@ -29,7 +20,7 @@ namespace TicketToRide.Domain.Entities
 
         public void DevolverBilhetes(List<BilheteDestino> bilhetes)
         {
-            foreach (var bilhete in bilhetes)
+            foreach (BilheteDestino bilhete in bilhetes)
             {
                 Descartar(bilhete);
             }

@@ -4,13 +4,13 @@ namespace TicketToRide.Domain.Entities
 {
     public class Jogador
     {
-        public string Id { get; set; } = string.Empty;
-        public string Nome { get; set; } = string.Empty;
+        public string Id { get; set; }
+        public string Nome { get; set; }
         public int Pontuacao { get; set; } = 0;
         public int PecasTremRestante { get; set; } = 45;
-        public List<CartaVeiculo> MaoCartas { get; set; } = new();
-        public List<BilheteDestino> BilhetesDestino { get; set; } = new();
-        public List<Rota> RotasConquistadas { get; set; } = new();
+        public List<CartaVeiculo> MaoCartas { get; private set; } = [];
+        public List<BilheteDestino> BilhetesDestino { get; set; } = [];
+        public List<Rota> RotasConquistadas { get; set; } = [];
 
         public Jogador(string id, string nome)
         {
@@ -25,27 +25,24 @@ namespace TicketToRide.Domain.Entities
                 return 0;
             }
 
-            // Verificar se tem as cartas necessárias
             if (!TemCartasParaRota(rota, cartasUsadas))
             {
                 return 0;
             }
 
-            // Remover cartas da mão
-            foreach (var carta in cartasUsadas)
+            foreach (CartaVeiculo carta in cartasUsadas)
             {
                 MaoCartas.Remove(carta);
             }
 
-            // Adicionar rota conquistada
             RotasConquistadas.Add(rota);
-            rota.Conquistar(this);
 
-            // Remover peças de trem
             RemoverPecasTrem(rota.Tamanho);
 
-            // Calcular pontos da rota
-            var pontos = rota.CalcularPontos();
+            int pontos = rota.CalcularPontos();
+
+            rota.Disponivel = false;
+
             Pontuacao += pontos;
 
             return pontos;
@@ -58,21 +55,16 @@ namespace TicketToRide.Domain.Entities
                 return false;
             }
 
-            // Verificar se todas as cartas estão na mão do jogador
-            foreach (var carta in cartasUsadas)
+            if (cartasUsadas.Any(x => !MaoCartas.Contains(x)))
             {
-                if (!MaoCartas.Contains(carta))
-                {
-                    return false;
-                }
+                return false;
             }
 
-            // Verificar se as cartas podem ser usadas para a cor da rota
-            var cartasValidas = cartasUsadas.Count(c => c.PodeSerUsadaPara(rota.Cor));
+            int cartasValidas = cartasUsadas.Count(c => c.PodeSerUsadaPara(rota.Cor));
             return cartasValidas >= rota.Tamanho;
         }
 
-        public int CalcularComprimentoRotaContinuo()
+        public int CalcularComprimentoRotaContinua()
         {
             // Implementar algoritmo para encontrar a rota contínua mais longa
             // Por simplicidade, retornar a soma de todas as rotas por enquanto
@@ -90,10 +82,16 @@ namespace TicketToRide.Domain.Entities
             return cartas;
         }
 
+        public List<BilheteDestino> ComprarCartas(List<BilheteDestino> cartas)
+        {
+            BilhetesDestino.AddRange(cartas);
+            return cartas;
+        }
+
         public int CalcularPontosBilhetes()
         {
             int pontos = 0;
-            foreach (var bilhete in BilhetesDestino)
+            foreach (BilheteDestino bilhete in BilhetesDestino)
             {
                 if (bilhete.IsCompleto(RotasConquistadas))
                 {
@@ -109,59 +107,35 @@ namespace TicketToRide.Domain.Entities
 
         public void AtualizarPontuacao()
         {
-            // Pontuação base das rotas já está sendo calculada em ConquistarRota
-            // Adicionar pontos dos bilhetes
-            var pontosBilhetes = CalcularPontosBilhetes();
-            Pontuacao += pontosBilhetes;
-        }
+            int pontosBilhetes = CalcularPontosBilhetes();
 
-        public int GetPontuacao()
-        {
-            return Pontuacao;
+            Pontuacao += pontosBilhetes;
         }
 
         public List<CartaVeiculo> ObterCartasParaCor(Cor cor)
         {
-            return MaoCartas.Where(c => c.PodeSerUsadaPara(cor)).ToList();
+            return [.. MaoCartas.Where(c => c.PodeSerUsadaPara(cor))];
         }
 
-        public List<CartaVeiculo> ObterLocomotivas()
+        public bool TemCartasSuficientesParaConquistarRota(Rota rota)
         {
-            return MaoCartas.Where(c => c.EhLocomotiva).ToList();
-        }
-
-        public int ContarCartasPorCor(Cor cor)
-        {
-            return MaoCartas.Count(c => c.Cor == cor);
-        }
-
-        public int ContarLocomotivas()
-        {
-            return MaoCartas.Count(c => c.EhLocomotiva);
-        }
-
-        public bool TemCartasSuficientesParaRota(Rota rota)
-        {
-            var cartasDisponiveis = ObterCartasParaCor(rota.Cor);
+            List<CartaVeiculo> cartasDisponiveis = ObterCartasParaCor(rota.Cor);
             return cartasDisponiveis.Count >= rota.Tamanho;
         }
 
         public List<CartaVeiculo> SelecionarCartasParaRota(Rota rota)
         {
-            var cartasSelecionadas = new List<CartaVeiculo>();
-            var cartasDisponiveis = ObterCartasParaCor(rota.Cor);
+            List<CartaVeiculo> cartasSelecionadas = new();
+            List<CartaVeiculo> cartasDisponiveis = ObterCartasParaCor(rota.Cor);
 
-            // Priorizar cartas normais sobre locomotivas
-            var cartasNormais = cartasDisponiveis.Where(c => !c.EhLocomotiva).ToList();
-            var locomotivas = cartasDisponiveis.Where(c => c.EhLocomotiva).ToList();
+            List<CartaVeiculo> locomotivas = [.. cartasDisponiveis.Where(c => c.Cor == Cor.LOCOMOTIVA)];
+            List<CartaVeiculo> cartasNormais = [.. cartasDisponiveis.Except(locomotivas)];
 
-            // Adicionar cartas normais primeiro
             for (int i = 0; i < Math.Min(rota.Tamanho, cartasNormais.Count); i++)
             {
                 cartasSelecionadas.Add(cartasNormais[i]);
             }
 
-            // Se precisar de mais cartas, usar locomotivas
             int cartasFaltando = rota.Tamanho - cartasSelecionadas.Count;
             for (int i = 0; i < Math.Min(cartasFaltando, locomotivas.Count); i++)
             {
@@ -178,22 +152,12 @@ namespace TicketToRide.Domain.Entities
 
         public bool PodeComprarCartas()
         {
-            return MaoCartas.Count < 10; // Limite de cartas na mão
-        }
-
-        public bool PodeComprarBilhetes()
-        {
-            return true; // Sempre pode comprar bilhetes
+            return MaoCartas.Count < 10;
         }
 
         public bool PodeReivindicarRota()
         {
             return PecasTremRestante > 0;
-        }
-
-        public override string ToString()
-        {
-            return $"{Nome} (Pontos: {Pontuacao}, Trens: {PecasTremRestante}, Cartas: {MaoCartas.Count})";
         }
     }
 }
