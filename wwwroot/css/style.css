@@ -58,6 +58,23 @@ body {
     border: none;
 }
 
+
+.carta-visivel {
+    cursor: pointer;
+    transition: transform .12s, box-shadow .12s;
+    user-select: none;
+}
+
+    .carta-visivel:hover {
+        transform: translateY(-3px);
+    }
+
+.carta-selecionada {
+    border: 3px solid #0d6efd !important; /* azul Bootstrap */
+    box-shadow: 0 6px 18px rgba(13,110,253,0.25);
+    transform: translateY(-4px);
+}
+
 .list-group-item {
     border: none;
     padding: 15px 20px;

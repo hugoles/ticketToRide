@@ -14,7 +14,18 @@ namespace TicketToRide.Domain.Entities
                 return null;
             }
 
-            return ObterCartaPorIndice(indice);
+            return ComprarCartaPorIndice(indice);
+        }
+
+        public IEnumerable<CartaVeiculo> ListarCartasReveladas()
+        {
+            List<CartaVeiculo> cartasReveladas = [];
+            for (int i = 0; i < 5; i++)
+            {
+                cartasReveladas.Add(ObterCartaPorIndice(i));
+            }
+
+            return cartasReveladas;
         }
     }
 }

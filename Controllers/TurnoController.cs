@@ -38,7 +38,7 @@ namespace TicketToRide.Controllers
         {
             try
             {
-                TurnoDTO turno = _turnoService.ComprarCartasVeiculo(partidaId, request.JogadorId, request.IndicesCartasVisiveis);
+                TurnoDTO turno = _turnoService.ComprarCartasVeiculo(partidaId, request.JogadorId, request.Indices);
                 return Ok(turno);
             }
             catch (ArgumentException ex)
@@ -91,7 +91,7 @@ namespace TicketToRide.Controllers
     public class ComprarCartasRequest
     {
         public string JogadorId { get; set; } = string.Empty;
-        public List<int>? IndicesCartasVisiveis { get; set; }
+        public List<int>? Indices { get; set; }
     }
 
     public class ReivindicarRotaRequest

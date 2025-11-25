@@ -5,6 +5,7 @@ class TicketToRideApp {
         this.apiBaseUrl = 'http://localhost:5257'; // ASP.NET Core port
         this.currentPartidaId = null;
         this.currentJogadorId = null;
+        this.cartasVisiveisSelecionadas = [];
         this.init();
     }
 

@@ -39,6 +39,7 @@ class JogoManager {
         this.atualizarMinhasCartas();
         this.atualizarMeusBilhetes();
         this.atualizarMinhasRotas();
+        this.atualizarCartasVisiveis();
     }
 
     atualizarTurnoAtual() {
@@ -231,6 +232,43 @@ class JogoManager {
         });
     }
 
+    atualizarCartasVisiveis() {
+        const container = document.getElementById("visible-cards");
+        container.innerHTML = "";
+        this.cartasVisiveisSelecionadas = [];
+
+        if (!this.estadoAtual || !Array.isArray(this.estadoAtual.cartasVisiveis)) return;
+
+        this.estadoAtual.cartasVisiveis.forEach((carta, index) => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card mb-2 carta-visivel';
+            cardEl.dataset.index = index;
+
+            cardEl.innerHTML = `<div class="card-body p-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge" style="background-color: ${this.getCorHex(carta.cor)}; color: ${this.getCorTextoConformeBackground(carta.cor)}">${this.getCorNome(carta.cor)}</span>
+                                     </div>
+                                </div>`;
+
+            cardEl.addEventListener("click", () => this.toggleCartaVisivel(index, cardEl));
+
+            container.appendChild(cardEl);
+        });
+    }
+
+    toggleCartaVisivel(index, element) {
+        const selecionada = this.cartasVisiveisSelecionadas.includes(index);
+
+        if (selecionada) {
+            this.cartasVisiveisSelecionadas =
+                this.cartasVisiveisSelecionadas.filter(i => i !== index);
+            element.classList.remove("carta-selecionada");
+        } else {
+            this.cartasVisiveisSelecionadas.push(index);
+            element.classList.add("carta-selecionada");
+        }
+    }
+
     podeReivindicarRota(rota) {
         if (!this.estadoAtual.turnoAtual) return false;
 
@@ -253,7 +291,7 @@ class JogoManager {
 
         const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
         try {
-            await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/comprar-cartas`, 'POST', { jogadorId: jogadorAtual });
+            await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/comprar-cartas`, 'POST', { jogadorId: jogadorAtual, indices: this.cartasVisiveisSelecionadas });
             await this.atualizarEstado();
             this.app.showNotification('Cartas compradas com sucesso!', 'success');
         } catch (error) {

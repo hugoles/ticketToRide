@@ -175,7 +175,8 @@ namespace TicketToRide.Domain.Entities
                 PartidaIniciada = Iniciada,
                 PartidaFinalizada = Finalizada,
                 NumeroJogadores = Jogadores.Count,
-                PodeIniciar = PodeIniciar()
+                PodeIniciar = PodeIniciar(),
+                CartasVisiveis = BaralhoCartasVeiculo.ListarCartasReveladas().Select(x => x.MapearParaDTO()),
             };
         }
 

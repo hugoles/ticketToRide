@@ -21,7 +21,7 @@ namespace TicketToRide.Domain.Entities
             MonteCompra.AddRange(cartas);
         }
 
-        protected T? ObterCartaPorIndice(int indice)
+        protected T? ComprarCartaPorIndice(int indice)
         {
             if (indice < 0 || indice >= MonteCompra.Count)
             {
@@ -31,6 +31,16 @@ namespace TicketToRide.Domain.Entities
             T carta = MonteCompra[indice];
             MonteCompra.RemoveAt(indice);
             return carta;
+        }
+
+        protected T? ObterCartaPorIndice(int indice)
+        {
+            if (indice < 0 || indice >= MonteCompra.Count)
+            {
+                return null;
+            }
+
+            return MonteCompra[indice];
         }
 
         public List<T> Comprar(int quantidade)

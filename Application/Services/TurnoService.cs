@@ -31,7 +31,7 @@ namespace TicketToRide.Application.Services
             return partida.TurnoAtual.MapearParaDTO();
         }
 
-        public TurnoDTO ComprarCartasVeiculo(string partidaId, string jogadorId, List<int> indicesCartasVisiveis = null)
+        public TurnoDTO ComprarCartasVeiculo(string partidaId, string jogadorId, List<int> indices = null)
         {
             Partida? partida = _partidaRepository.ObterPartida(partidaId) ?? throw new ArgumentException("Partida não encontrada");
             if (!partida.Iniciada)
@@ -47,9 +47,9 @@ namespace TicketToRide.Application.Services
             Jogador? jogador = partida.ObterJogador(jogadorId) ?? throw new ArgumentException("Jogador não encontrado");
             List<CartaVeiculo> cartasCompradas = [];
 
-            if (indicesCartasVisiveis?.Any() == true)
+            if (indices?.Any() == true)
             {
-                foreach (int indice in indicesCartasVisiveis)
+                foreach (int indice in indices)
                 {
                     CartaVeiculo? carta = partida.BaralhoCartasVeiculo.ComprarCartaRevelada(indice);
                     if (carta != null)
@@ -133,7 +133,6 @@ namespace TicketToRide.Application.Services
                 throw new InvalidOperationException("Não há bilhetes disponíveis no baralho");
             }
 
-            // O jogador deve manter pelo menos 1 bilhete
             if (bilhetesSelecionados.Count == 0)
             {
                 throw new InvalidOperationException("Jogador deve manter pelo menos 1 bilhete");
