@@ -1,4 +1,4 @@
-using TicketToRide.Domain.Entities;
+using TicketToRideAPI.Application.DTOs;
 
 namespace TicketToRide.Application.DTOs
 {
@@ -8,9 +8,9 @@ namespace TicketToRide.Application.DTOs
         public string Nome { get; set; } = string.Empty;
         public int Pontuacao { get; set; }
         public int PecasTremRestante { get; set; }
-        public List<CartaDTO> MaoCartas { get; set; } = new();
-        public List<BilheteDestinoDTO> BilhetesDestino { get; set; } = new();
-        public List<RotaDTO> RotasConquistadas { get; set; } = new();
+        public List<CartaVeiculoDTO> MaoCartas { get; set; } = [];
+        public List<BilheteDestinoDTO> BilhetesDestino { get; set; } = [];
+        public List<RotaDTO> RotasConquistadas { get; set; } = [];
         public int NumeroCartas { get; set; }
         public int NumeroBilhetes { get; set; }
         public int NumeroRotas { get; set; }
