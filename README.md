@@ -95,16 +95,20 @@ TicketToRide Project/
 
 1. **Navegue até o diretório do projeto:**
    ```bash
-   cd "C:\Users\Hug_d\Documents\TicketToRide Project"
+   cd "...\TicketToRide Project"
    ```
 
 2. **Execute o projeto:**
+  Primeiro tem que buildar
+   ```bash
+   dotnet build
+   ```
    ```bash
    dotnet run
    ```
 
 3. **Acesse a aplicação:**
-   - **Frontend**: https://localhost:7000 ou http://localhost:5000
+   - **Frontend**: https://localhost:5257
    - **API**: https://localhost:7000/api/partida ou http://localhost:5000/api/partida
 
 ## 🎯 Como Jogar
