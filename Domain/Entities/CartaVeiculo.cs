@@ -13,7 +13,7 @@ namespace TicketToRide.Domain.Entities
 
         public bool PodeSerUsadaPara(Cor corRota)
         {
-            return Cor == Cor.LOCOMOTIVA || Cor == corRota;
+            return Cor == Cor.LOCOMOTIVA || Cor == corRota || corRota == Cor.CINZA;
         }
     }
 }

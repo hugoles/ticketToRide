@@ -65,6 +65,7 @@ namespace TicketToRide.Domain.Entities
         public Jogador? CalcularRotaMaisLonga()
         {
             return Jogadores
+                .Where(j => j.RotasConquistadas.Count > 0)
                 .Select(j => new { Jogador = j, Comprimento = j.CalcularComprimentoRotaContinua() })
                 .OrderByDescending(x => x.Comprimento)
                 .FirstOrDefault()

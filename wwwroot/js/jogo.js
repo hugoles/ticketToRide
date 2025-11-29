@@ -7,6 +7,7 @@ class JogoManager {
         this.app = window.ticketToRideApp;
         this.estadoAtual = null;
         this.rotaSelecionada = null;
+        this.cartasParaRotaSelecionada = [];
     }
 
     mostrarModalPrimeiroTurno(jogadorId) {
@@ -84,8 +85,7 @@ class JogoManager {
         this.atualizarBilhetesVisiveis();
 
         const turno = this.estadoAtual.turnoAtual;
-        if (turno && !this.app.primeiroTurnoFeito.has(turno.jogadorId))
-        {
+        if (turno && !this.app.primeiroTurnoFeito.has(turno.jogadorId)) {
             this.mostrarModalPrimeiroTurno(this.jogadorId);
         }
     }
@@ -196,28 +196,79 @@ class JogoManager {
 
         cartasElement.innerHTML = '';
 
+        this.cartasParaRotaSelecionadas = [];
+
         const cartasPorCor = {};
-        meuJogador.maoCartas.forEach(carta => {
+        meuJogador.maoCartas.forEach((carta, index) => {
             if (!cartasPorCor[carta.cor]) {
                 cartasPorCor[carta.cor] = [];
             }
-            cartasPorCor[carta.cor].push(carta);
+            cartasPorCor[carta.cor].push({ carta, originalIndex: index });
         });
 
         Object.keys(cartasPorCor).forEach(cor => {
-            const cartas = cartasPorCor[cor];
-            const cartaElement = document.createElement('div');
-            cartaElement.className = 'card mb-2';
-            cartaElement.innerHTML = `
-                <div class="card-body p-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="badge" style="background-color: ${this.getCorHex(cor)}; color: ${this.getCorTextoConformeBackground(cor)}">${this.getCorNome(cor)}</span>
-                        <span class="badge bg-secondary">${cartas.length}</span>
-                    </div>
-                </div>
-            `;
-            cartasElement.appendChild(cartaElement);
+            const cartasAgrupadas = cartasPorCor[cor];
+
+            const grupoEl = document.createElement('div');
+            grupoEl.className = 'card mb-2';
+
+            const headerEl = document.createElement('div');
+            headerEl.className = 'card-body p-2 pb-1';
+            headerEl.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="badge" style="background-color: ${this.getCorHex(cor)}; color: ${this.getCorTextoConformeBackground(cor)}">
+                    ${this.getCorNome(cor)}
+                </span>
+                <span class="badge bg-secondary">${cartasAgrupadas.length}</span>
+            </div>
+        `;
+
+            const bodyEl = document.createElement('div');
+            bodyEl.className = 'card-body pt-1';
+
+            const containerCartas = document.createElement('div');
+            containerCartas.className = 'd-flex flex-wrap gap-1';
+
+            cartasAgrupadas.forEach(({ carta, originalIndex }) => {
+                const cartaEl = document.createElement('div');
+                cartaEl.className = 'badge carta-mao-selecionavel';
+                cartaEl.dataset.index = originalIndex;
+                cartaEl.dataset.cor = carta.cor;
+
+                cartaEl.style.backgroundColor = this.getCorHex(carta.cor);
+                cartaEl.style.color = this.getCorTextoConformeBackground(carta.cor);
+                cartaEl.style.cursor = 'pointer';
+
+                cartaEl.textContent = this.getCorNome(carta.cor);
+
+                if (this.cartasParaRotaSelecionadas.includes(originalIndex)) {
+                    cartaEl.classList.add('carta-mao-selecionada');
+                }
+
+                cartaEl.addEventListener('click', () => this.toggleCartaDaMaoParaRota(originalIndex, cartaEl));
+
+                containerCartas.appendChild(cartaEl);
+            });
+
+            bodyEl.appendChild(containerCartas);
+
+            grupoEl.appendChild(headerEl);
+            grupoEl.appendChild(bodyEl);
+            cartasElement.appendChild(grupoEl);
         });
+    }
+
+    toggleCartaDaMaoParaRota(originalIndex, element) {
+        const jaSelecionada = this.cartasParaRotaSelecionadas.includes(originalIndex);
+
+        if (jaSelecionada) {
+            this.cartasParaRotaSelecionadas =
+                this.cartasParaRotaSelecionadas.filter(id => id !== originalIndex);
+            element.classList.remove('carta-mao-selecionada');
+        } else {
+            this.cartasParaRotaSelecionadas.push(originalIndex);
+            element.classList.add('carta-mao-selecionada');
+        }
     }
 
     atualizarMeusBilhetes() {
@@ -333,6 +384,18 @@ class JogoManager {
         const meuJogador = this.estadoAtual.jogadores.find(j => j.id === jogadorAtual);
         if (!meuJogador) return false;
 
+        if (rota.cor === "CINZA") {
+            const locomotivas = meuJogador.maoCartas.filter(c => c.cor === "LOCOMOTIVA").length;
+            const cartasPorCor = {};
+
+            meuJogador.maoCartas
+                .filter(c => c.cor !== "LOCOMOTIVA")
+                .forEach(c => cartasPorCor[c.cor] = (cartasPorCor[c.cor] || 0) + 1);
+
+            const melhorCor = Math.max(0, ...Object.values(cartasPorCor));
+            return (melhorCor + locomotivas) >= rota.tamanho;
+        }
+
         const cartasCor = meuJogador.maoCartas.filter(c =>
             c.cor === rota.cor || c.cor === "LOCOMOTIVA"
         );
@@ -378,14 +441,26 @@ class JogoManager {
             this.rotaSelecionada = rotasDisponiveis[0].id;
         }
 
+        if (!this.cartasParaRotaSelecionadas || this.cartasParaRotaSelecionadas.length === 0) {
+            this.app.showNotification('Selecione as cartas que deseja usar para reivindicar a rota.', 'warning');
+            return;
+        }
+
         const jogadorAtual = this.estadoAtual.turnoAtual.jogadorId;
+
         try {
-            await this.app.makeApiCall(`/api/turno/partida/${this.partidaId}/turno/reivindicar-rota`, 'POST', {
-                jogadorId: jogadorAtual,
-                rotaId: this.rotaSelecionada
-            });
+            await this.app.makeApiCall(
+                `/api/turno/partida/${this.partidaId}/turno/reivindicar-rota`,
+                'POST',
+                {
+                    jogadorId: jogadorAtual,
+                    rotaId: this.rotaSelecionada,
+                    cartasSelecionadas: this.cartasParaRotaSelecionadas
+                }
+            );
 
             this.rotaSelecionada = null;
+            this.cartasParaRotaSelecionadas = [];
             await this.atualizarEstado();
             this.app.showNotification('Rota reivindicada com sucesso!', 'success');
         } catch (error) {

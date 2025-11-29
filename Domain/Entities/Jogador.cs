@@ -27,9 +27,9 @@ namespace TicketToRide.Domain.Entities
             Nome = nome;
         }
 
-        public void ConquistarRota(Rota rota)
+        public void ConquistarRota(Rota rota, IEnumerable<int> cartasSelecionadas)
         {
-            RemoverCartasDaMao(SelecionarCartasParaRota(rota));
+            RemoverCartasDaMao(ObterCartasDaMao(cartasSelecionadas));
 
             RotasConquistadas.Add(rota);
 
@@ -39,7 +39,7 @@ namespace TicketToRide.Domain.Entities
 
             Pontuacao += rota.CalcularPontos();
 
-            this.Notify();
+            Notify();
         }
 
         private void RemoverCartasDaMao(List<CartaVeiculo> cartasUsadas)
@@ -60,16 +60,26 @@ namespace TicketToRide.Domain.Entities
             return PecasTremRestante >= rota.Tamanho;
         }
 
-        public bool TemCartasSuficientesParaConquistarRota(Rota rota)
+        public bool TemCartasSuficientesParaConquistarRota(Rota rota, IEnumerable<int> cartasSelecionadas)
         {
-            List<CartaVeiculo> cartas = SelecionarCartasParaRota(rota);
-            if (cartas.Count < rota.Tamanho)
+            if (cartasSelecionadas.Count() != rota.Tamanho)
             {
                 return false;
             }
 
-            return cartas.All(c => MaoCartas.Contains(c)
-                                         && rota.PodeSerConquistadaCom(c));
+            List<CartaVeiculo> cartas = ObterCartasDaMao(cartasSelecionadas);
+
+            if (rota.Cor == Cor.CINZA)
+            {
+                IEnumerable<Cor> coresUsadas = cartas
+                    .Where(c => c.Cor != Cor.LOCOMOTIVA)
+                    .Select(c => c.Cor)
+                    .Distinct();
+
+                return coresUsadas.Count() <= 1;
+            }
+
+            return cartas.All(c => rota.PodeSerConquistadaCom(c));
         }
 
         public int CalcularPontuacaoTotal()
@@ -94,31 +104,9 @@ namespace TicketToRide.Domain.Entities
             bilhetesDestino.AddRange(bilhetes);
         }
 
-        private List<CartaVeiculo> SelecionarCartasParaRota(Rota rota)
+        private List<CartaVeiculo> ObterCartasDaMao(IEnumerable<int> cartasSelecionadas)
         {
-            List<CartaVeiculo> cartasDisponiveis = ObterCartasParaCor(rota.Cor);
-            (List<CartaVeiculo> locomotivas, List<CartaVeiculo> cartasNormais) = SepararPorTipo(cartasDisponiveis);
-            return MontarSelecao(rota.Tamanho, cartasNormais, locomotivas);
-        }
-
-        private List<CartaVeiculo> ObterCartasParaCor(Cor cor)
-        {
-            return [.. MaoCartas.Where(c => c.PodeSerUsadaPara(cor))];
-        }
-
-        private static (List<CartaVeiculo> locomotivas, List<CartaVeiculo> normais) SepararPorTipo(List<CartaVeiculo> cartas)
-        {
-            List<CartaVeiculo> locomotivas = cartas.Where(c => c.Cor == Cor.LOCOMOTIVA).ToList();
-            List<CartaVeiculo> normais = cartas.Except(locomotivas).ToList();
-            return (locomotivas, normais);
-        }
-
-        private static List<CartaVeiculo> MontarSelecao(int tamanhoRota, List<CartaVeiculo> normais, List<CartaVeiculo> locomotivas)
-        {
-            List<CartaVeiculo> selecionadas = normais.Take(tamanhoRota).ToList();
-            int faltando = tamanhoRota - selecionadas.Count;
-            selecionadas.AddRange(locomotivas.Take(faltando));
-            return selecionadas;
+            return [.. MaoCartas.Where((c, i) => cartasSelecionadas.Contains(i))];
         }
 
         public void AdicionarPontuacao(int pontos)

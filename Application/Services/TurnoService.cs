@@ -63,7 +63,7 @@ namespace TicketToRide.Application.Services
                 .Where(c => c != null)];
         }
 
-        public TurnoDTO ReivindicarRota(string partidaId, string jogadorId, string rotaId)
+        public TurnoDTO ReivindicarRota(string partidaId, string jogadorId, string rotaId, IEnumerable<int> cartasSelecionadas = null)
         {
             Partida? partida = _partidaRepository.ObterPartida(partidaId) ?? throw new ArgumentException("Partida não encontrada");
 
@@ -78,9 +78,9 @@ namespace TicketToRide.Application.Services
                 throw new InvalidOperationException("Rota já foi conquistada");
             }
 
-            if (!jogador.TemCartasSuficientesParaConquistarRota(rota))
+            if (!jogador.TemCartasSuficientesParaConquistarRota(rota, cartasSelecionadas))
             {
-                throw new InvalidOperationException("Jogador não tem cartas suficientes para esta rota");
+                throw new InvalidOperationException("As cartas selecionadas não servem para essa rota");
             }
 
             if (!jogador.TemPecasSuficientesParaConquistarRota(rota))
@@ -88,7 +88,7 @@ namespace TicketToRide.Application.Services
                 throw new InvalidOperationException("Jogador não tem peças de trem suficientes");
             }
 
-            jogador.ConquistarRota(rota);
+            jogador.ConquistarRota(rota, cartasSelecionadas);
 
             partida.ExecutarAcaoTurno(Acao.REIVINDICAR_ROTA);
 

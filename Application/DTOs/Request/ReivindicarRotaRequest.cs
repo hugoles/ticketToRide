@@ -4,5 +4,7 @@ namespace TicketToRide.Controllers
     {
         public string JogadorId { get; set; } = string.Empty;
         public string RotaId { get; set; } = string.Empty;
+
+        public IEnumerable<int> CartasSelecionadas { get; set; } = [];
     }
 }

@@ -33,7 +33,7 @@ namespace TicketToRide.Controllers
         [HttpPost("partida/{partidaId}/turno/reivindicar-rota")]
         public ActionResult<TurnoDTO> ReivindicarRota(string partidaId, [FromBody] ReivindicarRotaRequest request)
         {
-            TurnoDTO turno = _turnoService.ReivindicarRota(partidaId, request.JogadorId, request.RotaId);
+            TurnoDTO turno = _turnoService.ReivindicarRota(partidaId, request.JogadorId, request.RotaId, request.CartasSelecionadas);
             return Ok(turno);
         }
 
